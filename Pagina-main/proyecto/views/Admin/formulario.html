@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Formulario de registro — MIAUtomotriz</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../../css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // Check session
+        fetch('../../controllers/API/auth.php?action=check_session')
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success || !data.user) {
+                    window.location.href = '../../views/login.html';
+                } else {
+                    if (data.user.rol !== 'administrador')
+                        window.location.href = '../../views/login.html';
+                    sessionStorage.setItem('user_email', data.user.correo);
+                    sessionStorage.setItem('user_rol', data.user.rol);
+                }
+            })
+            .catch(() => window.location.href = '../../views/login.html');
+    </script>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark mb-4 shadow bg-admin-blue">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <img src="../../img/logo.png" alt="logo" height="40" class="me-2">
+                <span>MIAUtomotriz</span>
+            </a>
+            <div class="collapse navbar-collapse justify-content-end">
+                <ul class="navbar-nav">
+                    <li class="nav-item border-end pe-3 me-3 text-white d-flex align-items-center">
+                        <small id="user-display">Bienvenido</small>
+                    </li>
+                    <li class="nav-item"><a class="nav-link" href="dashboard-admin.html">Inicio</a></li>
+                    <li class="nav-item"><a class="nav-link" href="reparaciones-admin.html">Órdenes</a></li>
+                    <li class="nav-item"><a class="nav-link" href="inventario.html">Inventario</a></li>
+                    <li class="nav-item"><a class="nav-link" href="reportes.html">Reportes</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="clientes.html">Clientes</a></li>
+                    <li class="nav-item"><a class="nav-link" href="personal.html">Personal</a></li>
+                    <li class="nav-item"><a class="nav-link text-danger"
+                            href="../../controllers/API/auth.php?action=logout"><i class="fas fa-sign-out-alt"></i></a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <main>
+        <section class="card">
+            <h2>Formulario de ingreso</h2>
+            <div id="statusMessage" class="error-message" style="display:none; margin-bottom: 20px;"></div>
+
+            <form id="registro-cliente-form" autocomplete="on" novalidate>
+                <fieldset>
+                    <legend>Datos personales</legend>
+
+                    <label for="nombre">Nombre completo</label>
+                    <input id="nombre" name="nombre" type="text" required maxlength="100" />
+
+                    <label for="rut">RUT/RUN</label>
+                    <input id="rut" name="rut" type="text" required maxlength="12" placeholder="Ej: 12.345.678-9" />
+
+                    <label for="email">Correo electrónico</label>
+                    <input id="email" name="email" type="email" required placeholder="tucorreo@ejemplo.com" />
+
+                    <label for="telefono">Teléfono</label>
+                    <input id="telefono" name="telefono" type="tel" maxlength="15" placeholder="Ej: +56 9 1234 5678" />
+
+                    <label for="giro">Giro (Actividad económica)</label>
+                    <input id="giro" name="giro" type="text" maxlength="100" />
+
+                    <label for="fecha_nacimiento">Fecha de nacimiento</label>
+                    <input id="fecha_nacimiento" name="fecha_nacimiento" type="date" />
+                </fieldset>
+
+                <fieldset>
+                    <legend>Dirección</legend>
+                    <label for="region">Región</label>
+                    <select id="region" name="region" required>
+                        <option value="">Seleccione una región</option>
+                    </select>
+
+                    <label for="ciudad">Ciudad</label>
+                    <select id="ciudad" name="ciudad" required>
+                        <option value="">Seleccione una ciudad</option>
+                    </select>
+
+                    <label for="poblacion">Población</label>
+                    <input id="poblacion" name="poblacion" type="text" required maxlength="100" />
+
+                    <label for="calle">Calle</label>
+                    <input id="calle" name="calle" type="text" required maxlength="100" />
+
+                    <label for="numero">Número</label>
+                    <input id="numero" name="numero" type="number" required />
+
+                    <label for="pasaje">Pasaje (Opcional)</label>
+                    <input id="pasaje" name="pasaje" type="text" maxlength="100" />
+
+                    <label for="codigo_postal">Código Postal</label>
+                    <input id="codigo_postal" name="codigo_postal" type="text" required maxlength="10" />
+                </fieldset>
+
+                <button type="submit">Registrar cliente</button>
+            </form>
+        </section>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const email = sessionStorage.getItem('user_email') || 'Usuario';
+            const rol = sessionStorage.getItem('user_rol');
+            document.getElementById('user-display').textContent = 'Bienvenido, ' + email;
+        });
+
+        document.getElementById('registro-cliente-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const msgDiv = document.getElementById('statusMessage');
+            const btn = this.querySelector('button[type="submit"]');
+
+            // Recopilar datos
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+
+            // Validacion de RUT Frontend
+            if (!validarRut(data.rut)) {
+                msgDiv.textContent = 'El RUT ingresado no es válido. Revise el formato y dígito verificador.';
+                msgDiv.className = 'error-message';
+                msgDiv.style.display = 'block';
+                // Hacer scroll al mensaje
+                msgDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+
+            btn.disabled = true;
+            msgDiv.style.display = 'none';
+
+            try {
+                const response = await fetch('../../controllers/API/clientes.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    Swal.fire({
+                        title: '¡Éxito!',
+                        text: 'Cliente registrado exitosamente.',
+                        icon: 'success',
+                        confirmButtonText: 'Aceptar',
+                        confirmButtonColor: '#28a745',
+                        background: '#f8f9fa',
+                        color: '#333'
+                    }).then(() => {
+                        window.location.href = 'clientes.html';
+                    });
+                } else {
+                    throw new Error(result.message || 'Error al registrar.');
+                }
+
+            } catch (error) {
+                msgDiv.textContent = error.message;
+                msgDiv.className = 'error-message';
+                msgDiv.style.display = 'block';
+                btn.disabled = false;
+            }
+        });
+
+        const regionesYciudades = {
+            "Metropolitana": ["Santiago"],
+            "Valparaíso": ["Valparaíso"],
+            "Biobío": ["Concepción"],
+            "Coquimbo": ["La Serena"],
+            "Antofagasta": ["Antofagasta"],
+            "Araucanía": ["Temuco"],
+            "O'Higgins": ["Rancagua"],
+            "Tarapacá": ["Iquique"],
+            "Los Lagos": ["Puerto Montt"],
+            "Maule": ["Talca"]
+        };
+
+        const selectRegion = document.getElementById('region');
+        const selectCiudad = document.getElementById('ciudad');
+        const selectedRegion = selectRegion.value;
+        const selectedCiudad = selectCiudad.value;
+
+        // Poblar selects
+        for (const region in regionesYciudades) {
+            const option = document.createElement("option");
+            option.value = region;
+            option.textContent = region;
+            if (region === selectedRegion) {
+                option.selected = true;
+            }
+            selectRegion.appendChild(option);
+        }
+
+        function updateCiudades(region, selectedCiudad = '') {
+            const ciudades = regionesYciudades[region] || [];
+            selectCiudad.innerHTML = '<option value="">Seleccione una ciudad</option>';
+            ciudades.forEach(ciudad => {
+                const option = document.createElement("option");
+                option.value = ciudad;
+                option.textContent = ciudad;
+                if (ciudad === selectedCiudad) {
+                    option.selected = true;
+                }
+                selectCiudad.appendChild(option);
+            });
+        }
+
+        // Cambio de región
+        selectRegion.addEventListener("change", function () {
+            const region = this.value;
+            updateCiudades(region);
+        });
+
+        // Cambio de ciudad
+        selectCiudad.addEventListener("change", function () {
+            const ciudadSeleccionada = this.value;
+            if (!ciudadSeleccionada) return; // No hacer nada si selecciona el placeholder
+
+            for (const region in regionesYciudades) {
+                if (regionesYciudades[region].includes(ciudadSeleccionada)) {
+                    selectRegion.value = region;
+                    // repoblar ciudades de esa región y dejar la ciudad seleccionada marcada
+                    updateCiudades(region, ciudadSeleccionada);
+                    break;
+                }
+            }
+        });
+
+        // Preselección
+        if (selectRegion.value) {
+            updateCiudades(selectRegion.value, selectedCiudad);
+        }
+    </script>
+
+    <script>
+        function validarRut(rutCompleto) {
+            if (!rutCompleto) return false;
+            rutCompleto = rutCompleto.replace("‐", "-");
+            if (!/^[0-9]+[-|‐]{1}[0-9kK]{1}$/.test(rutCompleto)) return false;
+            const tmp = rutCompleto.split('-');
+            let digv = tmp[1];
+            const rut = tmp[0];
+            if (digv == 'K') digv = 'k';
+
+            return (dv(rut) == digv);
+        }
+
+        function dv(T) {
+            let M = 0, S = 1;
+            for (; T; T = Math.floor(T / 10))
+                S = (S + T % 10 * (9 - M++ % 6)) % 11;
+            return S ? S - 1 : 'k';
+        }
+    </script>
+    <footer>
+        <p>© 2025 MIAUtomotriz — Todos los derechos reservados.</p>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

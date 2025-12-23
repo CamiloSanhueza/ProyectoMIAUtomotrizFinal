@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Personal - MIAUtomotriz</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../../css/style.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        fetch('../../controllers/API/auth.php?action=check_session')
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success || !data.user || data.user.rol !== 'administrador') {
+                    window.location.href = '../login.html';
+                } else {
+                    const display = document.getElementById('user-display');
+                    if (display) display.textContent = 'Bienvenido, ' + data.user.correo;
+                }
+            }).catch(() => window.location.href = '../login.html');
+    </script>
+</head>
+
+<body>
+    <div id="app">
+        <nav class="navbar navbar-expand-lg navbar-dark mb-4 shadow bg-admin-blue">
+            <div class="container">
+                <a class="navbar-brand d-flex align-items-center" href="#">
+                    <img src="../../img/logo.png" alt="logo" height="40" class="me-2">
+                    <span>MIAUtomotriz</span>
+                </a>
+                <div class="collapse navbar-collapse justify-content-end">
+                    <ul class="navbar-nav">
+                        <li class="nav-item border-end pe-3 me-3 text-white d-flex align-items-center">
+                            <small id="user-display">Bienvenido</small>
+                        </li>
+                        <li class="nav-item"><a class="nav-link" href="dashboard-admin.html">Inicio</a></li>
+                        <li class="nav-item"><a class="nav-link" href="reparaciones-admin.html">Órdenes</a></li>
+                        <li class="nav-item"><a class="nav-link" href="inventario.html">Inventario</a></li>
+                        <li class="nav-item"><a class="nav-link" href="reportes.html">Reportes</a></li>
+                        <li class="nav-item"><a class="nav-link" href="clientes.html">Clientes</a></li>
+                        <li class="nav-item"><a class="nav-link active" href="#">Personal</a></li>
+                        <li class="nav-item"><a class="nav-link text-danger"
+                                href="../../controllers/API/auth.php?action=logout"><i
+                                    class="fas fa-sign-out-alt"></i></a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3><i class="fas fa-users-cog text-primary"></i> Gestión de Personal</h3>
+                <button class="btn btn-primary" @click="openModalCreate"><i class="fas fa-user-plus"></i> Nuevo
+                    Usuario</button>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre</th>
+                                    <th>Rol</th>
+                                    <th>Email</th>
+                                    <th>Teléfono</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-if="loading">
+                                    <td colspan="6" class="text-center">Cargando...</td>
+                                </tr>
+                                <tr v-else v-for="u in users" :key="u.id">
+                                    <td>{{ u.id }}</td>
+                                    <td><strong>{{ u.nombre }} {{ u.apellido }}</strong><br><small class="text-muted">{{
+                                            u.rut }}</small></td>
+                                    <td><span
+                                            :class="['badge', u.rol.toLowerCase() === 'administrador' ? 'bg-danger' : 'bg-primary']">{{
+                                            u.rol }}</span></td>
+                                    <td>{{ u.correo }}</td>
+                                    <td>{{ u.telefono || '-' }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-dark me-1" @click="openModalEdit(u)"><i
+                                                class="fas fa-edit"></i></button>
+                                        <button class="btn btn-sm btn-outline-danger" @click="deleteUser(u)"><i
+                                                class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Usuario -->
+        <div class="modal fade" id="userModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-dark text-white">
+                        <h5 class="modal-title">{{ isEdit ? 'Editar Usuario' : 'Nuevo Usuario' }}</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form @submit.prevent="saveUser">
+                            <div class="row g-2 mb-3">
+                                <div class="col-6"><label>Nombre</label><input type="text" class="form-control"
+                                        v-model="form.nombre" required></div>
+                                <div class="col-6"><label>Apellido</label><input type="text" class="form-control"
+                                        v-model="form.apellido" required></div>
+                            </div>
+                            <div class="mb-3"><label>RUT</label><input type="text" class="form-control"
+                                    v-model="form.rut"></div>
+                            <div class="mb-3"><label>Rol</label>
+                                <select class="form-select" v-model="form.rol">
+                                    <option value="Mecanico">Mecánico</option>
+                                    <option value="Administrador">Administrador</option>
+                                </select>
+                            </div>
+                            <div class="mb-3"><label>Email</label><input type="email" class="form-control"
+                                    v-model="form.email" required></div>
+                            <div class="mb-3"><label>Teléfono</label><input type="tel" class="form-control"
+                                    v-model="form.telefono"></div>
+                            <div class="mb-3">
+                                <label>Contraseña {{ isEdit ? '(Dejar en blanco para mantener)' : '' }}</label>
+                                <input type="password" class="form-control" v-model="form.password" :required="!isEdit"
+                                    minlength="8">
+                            </div>
+                            <div class="d-flex justify-content-end">
+                                <button type="submit" class="btn btn-primary" :disabled="saving">{{ saving ?
+                                    'Guardando...' : 'Guardar' }}</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        /**
+         * Aplicación Vue para la gestión de Personal (Usuarios del sistema).
+         * Permite a los administradores crear, editar y eliminar cuentas de acceso.
+         */
+        createApp({
+            data() {
+                return {
+                    users: [],          // Lista de usuarios cargados
+                    loading: false,     // Flag de carga de tabla
+                    saving: false,      // Flag de guardado
+                    isEdit: false,      // Modo edición/creación
+                    form: {},           // Datos del formulario
+                    modal: null         // Referencia al modal
+                };
+            },
+            mounted() {
+                this.modal = new bootstrap.Modal(document.getElementById('userModal'));
+                this.loadUsers();
+            },
+            methods: {
+                /** Carga la lista de usuarios desde la API */
+                async loadUsers() {
+                    this.loading = true;
+                    try {
+                        const res = await fetch('../../controllers/API/personal.php');
+                        const json = await res.json();
+                        if (json.success) this.users = json.data;
+                    } catch (e) { console.error(e); }
+                    finally { this.loading = false; }
+                },
+
+                /** Abre el modal para crear un nuevo usuario limpio */
+                openModalCreate() {
+                    this.isEdit = false;
+                    this.form = { nombre: '', apellido: '', email: '', password: '', rol: 'Mecanico' };
+                    this.modal.show();
+                },
+
+                /** Abre el modal para editar un usuario existente */
+                openModalEdit(u) {
+                    this.isEdit = true;
+                    // Mapeamos 'correo' (DB) a 'email' (Formulario) y limpiamos password
+                    this.form = { ...u, email: u.correo, password: '' };
+                    this.modal.show();
+                },
+
+                /** Envía los datos del formulario al backend */
+                async saveUser() {
+                    this.saving = true;
+                    const method = this.isEdit ? 'PUT' : 'POST';
+                    try {
+                        const res = await fetch('../../controllers/API/personal.php', {
+                            method: method,
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(this.form)
+                        });
+                        const json = await res.json();
+                        if (json.success) {
+                            this.modal.hide();
+                            this.loadUsers();
+                            Swal.fire({
+                                title: 'Guardado',
+                                text: 'Guardado correctamente',
+                                icon: 'success',
+                                timer: 2000,
+                                showConfirmButton: false
+                            });
+                        } else {
+                            Swal.fire('Error', json.message, 'error');
+                        }
+                    } catch (e) {
+                        Swal.fire('Error', 'Error de red', 'error');
+                    }
+                    finally { this.saving = false; }
+                },
+
+                /** Elimina un usuario del sistema */
+                async deleteUser(u) {
+                    const result = await Swal.fire({
+                        title: '¿Estás seguro?',
+                        text: `¿Eliminar a ${u.nombre}? Esta acción no se puede deshacer.`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: 'Sí, eliminar',
+                        cancelButtonText: 'Cancelar'
+                    });
+
+                    if (!result.isConfirmed) return;
+
+                    try {
+                        const res = await fetch(`../../controllers/API/personal.php?id=${u.id}`, { method: 'DELETE' });
+                        const json = await res.json();
+                        if (json.success) {
+                            this.loadUsers();
+                            Swal.fire('Eliminado', 'El usuario ha sido eliminado.', 'success');
+                        } else {
+                            Swal.fire('Error', json.message, 'error');
+                        }
+                    } catch (e) {
+                        Swal.fire('Error', 'Error de conexión', 'error');
+                    }
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+
+</html>

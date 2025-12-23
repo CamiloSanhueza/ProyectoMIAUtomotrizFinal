@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Editar Cliente — MIAUtomotriz</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../../css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // Check session
+        fetch('../../controllers/API/auth.php?action=check_session')
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success || !data.user) {
+                    window.location.href = '../../views/login.html';
+                } else {
+                    if (data.user.rol !== 'administrador') {
+                        window.location.href = '../../views/login.html';
+                    }
+                    sessionStorage.setItem('user_email', data.user.correo);
+                    sessionStorage.setItem('user_rol', data.user.rol);
+                }
+            })
+            .catch(() => window.location.href = '../../views/login.html');
+    </script>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark mb-4 shadow bg-admin-blue">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <img src="../../img/logo.png" alt="logo" height="40" class="me-2">
+                <span>MIAUtomotriz</span>
+            </a>
+            <div class="collapse navbar-collapse justify-content-end">
+                <ul class="navbar-nav">
+                    <li class="nav-item border-end pe-3 me-3 text-white d-flex align-items-center">
+                        <small id="user-display">Bienvenido</small>
+                    </li>
+                    <li class="nav-item"><a class="nav-link" href="dashboard-admin.html">Inicio</a></li>
+                    <li class="nav-item"><a class="nav-link" href="reparaciones-admin.html">Órdenes</a></li>
+                    <li class="nav-item"><a class="nav-link" href="inventario.html">Inventario</a></li>
+                    <li class="nav-item"><a class="nav-link" href="reportes.html">Reportes</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="clientes.html">Clientes</a></li>
+                    <li class="nav-item"><a class="nav-link" href="personal.html">Personal</a></li>
+                    <li class="nav-item"><a class="nav-link text-danger"
+                            href="../../controllers/API/auth.php?action=logout"><i class="fas fa-sign-out-alt"></i></a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <main>
+        <section class="card">
+            <h2>Modificar datos del cliente</h2>
+
+            <div id="loadingMessage">Cargando datos del cliente...</div>
+            <div id="errorMessage" class="error-message" style="display:none;"></div>
+
+            <form id="edicion-cliente-form" style="display:none;" novalidate>
+                <!-- Campo oculto con el RUN original para identificar el registro -->
+                <input type="hidden" id="run_original" name="run_original">
+
+                <fieldset>
+                    <legend>Datos personales</legend>
+
+                    <label for="nombre">Nombre</label>
+                    <input id="nombre" name="nombre" type="text" required maxlength="100" />
+
+                    <label for="apellido">Apellido</label>
+                    <input id="apellido" name="apellido" type="text" required maxlength="100" />
+
+                    <label for="rut">RUT/RUN (No editable)</label>
+                    <input id="rut" name="rut" type="text" maxlength="12" readonly />
+
+                    <label for="email">Correo electrónico</label>
+                    <input id="email" name="email" type="email" required />
+
+                    <label for="telefono">Teléfono</label>
+                    <input id="telefono" name="telefono" type="tel" maxlength="15" />
+
+                    <label for="giro">Giro (Actividad económica)</label>
+                    <input id="giro" name="giro" type="text" maxlength="100" />
+
+                    <label for="fecha_nacimiento">Fecha de nacimiento</label>
+                    <input id="fecha_nacimiento" name="fecha_nacimiento" type="date" />
+                </fieldset>
+
+                <fieldset>
+                    <legend>Dirección</legend>
+
+                    <label for="region">Región</label>
+                    <select id="region" name="region" required>
+                        <option value="">Seleccione una región</option>
+                    </select>
+
+                    <label for="ciudad">Ciudad</label>
+                    <select id="ciudad" name="ciudad" required>
+                        <option value="">Seleccione una ciudad</option>
+                    </select>
+
+                    <label for="poblacion">Población</label>
+                    <input id="poblacion" name="poblacion" type="text" required maxlength="100" />
+
+                    <label for="calle">Calle</label>
+                    <input id="calle" name="calle" type="text" required maxlength="100" />
+
+                    <label for="numero">Número</label>
+                    <input id="numero" name="numero" type="number" required />
+
+                    <label for="pasaje">Pasaje (Opcional)</label>
+                    <input id="pasaje" name="pasaje" type="text" maxlength="100" />
+
+                    <label for="codigo_postal">Código Postal</label>
+                    <input id="codigo_postal" name="codigo_postal" type="text" required maxlength="10" />
+                </fieldset>
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit">Guardar Cambios</button>
+                    <a href="clientes.html" class="button-secondary"
+                        style="display: inline-block; text-align: center; line-height: 40px; text-decoration: none; color: black; background: #ddd; padding: 0 20px; border-radius: 4px;">Cancelar</a>
+                </div>
+            </form>
+        </section>
+    </main>
+
+    <!-- Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', async function () {
+            const email = sessionStorage.getItem('user_email') || 'Usuario';
+            const rol = sessionStorage.getItem('user_rol');
+            document.getElementById('user-display').textContent = 'Bienvenido, ' + email;
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const idCliente = urlParams.get('id');
+
+            if (!idCliente) {
+                window.location.href = 'clientes.html';
+                return;
+            }
+
+            const API_URL = '../../controllers/API/clientes.php?id=' + encodeURIComponent(idCliente);
+            const form = document.getElementById('edicion-cliente-form');
+            const loadingMsg = document.getElementById('loadingMessage');
+            const errorMsg = document.getElementById('errorMessage');
+            const fields = {
+                nombre: document.getElementById('nombre'),
+                apellido: document.getElementById('apellido'),
+                rut: document.getElementById('rut'),
+                run_original: document.getElementById('run_original'),
+                email: document.getElementById('email'),
+                telefono: document.getElementById('telefono'),
+                giro: document.getElementById('giro'),
+                fecha_nacimiento: document.getElementById('fecha_nacimiento'),
+                region: document.getElementById('region'),
+                ciudad: document.getElementById('ciudad'),
+                poblacion: document.getElementById('poblacion'),
+                calle: document.getElementById('calle'),
+                numero: document.getElementById('numero'),
+                pasaje: document.getElementById('pasaje'),
+                codigo_postal: document.getElementById('codigo_postal')
+            };
+
+            // Lista de regiones local
+            const regionesYciudades = {
+                "Metropolitana": ["Santiago"],
+                "Valparaíso": ["Valparaíso"],
+                "Biobío": ["Concepción"],
+                "Coquimbo": ["La Serena"],
+                "Antofagasta": ["Antofagasta"],
+                "Araucanía": ["Temuco"],
+                "O'Higgins": ["Rancagua"],
+                "Tarapacá": ["Iquique"],
+                "Los Lagos": ["Puerto Montt"],
+                "Maule": ["Talca"]
+            };
+
+            // Poblar región
+            for (const region in regionesYciudades) {
+                const option = document.createElement("option");
+                option.value = region;
+                option.textContent = region;
+                fields.region.appendChild(option);
+            }
+
+            function updateCiudades(region, ciudadSeleccionada = '') {
+                const ciudades = regionesYciudades[region] || [];
+                fields.ciudad.innerHTML = '<option value="">Seleccione una ciudad</option>';
+                ciudades.forEach(ciudad => {
+                    const option = document.createElement("option");
+                    option.value = ciudad;
+                    option.textContent = ciudad;
+                    if (ciudad === ciudadSeleccionada) option.selected = true;
+                    fields.ciudad.appendChild(option);
+                });
+            }
+
+            fields.region.addEventListener('change', function () {
+                updateCiudades(this.value);
+            });
+
+            fields.ciudad.addEventListener('change', function () {
+                const ciudad = this.value;
+                if (!ciudad) return;
+                // Rellenar región según ciudad
+                for (const r in regionesYciudades) {
+                    if (regionesYciudades[r].includes(ciudad)) {
+                        if (fields.region.value !== r) {
+                            fields.region.value = r;
+                            updateCiudades(r, ciudad);
+                        }
+                        break;
+                    }
+                }
+            });
+
+            // Guardar formulario
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const btn = this.querySelector('button[type="submit"]');
+                btn.disabled = true;
+                errorMsg.style.display = 'none';
+
+                // Serializar datos
+                const formData = new FormData(this);
+                const data = Object.fromEntries(formData.entries());
+
+                try {
+                    const response = await fetch('../../controllers/API/clientes.php', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        await Swal.fire({
+                            title: 'Actualizado',
+                            text: 'Cliente actualizado exitosamente.',
+                            icon: 'success',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                        window.location.href = 'clientes.html';
+                    } else {
+                        throw new Error(result.message || 'Error al actualizar.');
+                    }
+                } catch (err) {
+                    errorMsg.textContent = err.message;
+                    errorMsg.style.display = 'block';
+                    btn.disabled = false;
+                }
+            });
+
+            // Obtener cliente
+            try {
+                const response = await fetch(API_URL);
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    const data = result.data;
+
+                    // Llenar inputs
+                    fields.nombre.value = data.nombre || '';
+                    fields.apellido.value = data.apellido || '';
+                    fields.rut.value = data.id || '';
+                    fields.run_original.value = data.id || '';
+                    fields.email.value = data.correo || '';
+                    fields.telefono.value = data.telefono || '';
+                    fields.giro.value = data.giro || '';
+                    fields.fecha_nacimiento.value = data.fecha_nacimiento || '';
+                    fields.poblacion.value = data.poblacion || '';
+                    fields.calle.value = data.calle || '';
+                    fields.numero.value = data.numero || '';
+                    fields.pasaje.value = data.pasaje || '';
+                    fields.codigo_postal.value = data.codigo_postal || '';
+
+                    // Llenar dirección
+                    if (data.region) {
+                        fields.region.value = data.region;
+                        updateCiudades(data.region, data.ciudad);
+                    }
+
+                    loadingMsg.style.display = 'none';
+                    form.style.display = 'block';
+
+                } else {
+                    throw new Error(result.message || 'Cliente no encontrado');
+                }
+
+            } catch (error) {
+                console.error(error);
+                loadingMsg.style.display = 'none';
+                errorMsg.textContent = 'Error: No se pudieron cargar los datos del cliente. ' + error.message;
+                errorMsg.style.display = 'block';
+            }
+        });
+    </script>
+
+    <footer>
+        <p>© 2025 MIAUtomotriz — Todos los derechos reservados.</p>
+    </footer>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

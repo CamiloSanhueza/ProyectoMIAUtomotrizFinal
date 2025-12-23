@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand Colors (Based on Web Palette) -->
+    <color name="primary">#020e7c</color>      <!-- Accent Blue -->
+    <color name="primary_variant">#010a5c</color> <!-- Accent Hover -->
+    <color name="secondary">#6c757d</color>    <!-- Secondary Button Gray -->
+    <color name="secondary_variant">#5a6268</color>
+    
+    <!-- UI Colors -->
+    <color name="background">#f5f6f7</color>   <!-- Web BG -->
+    <color name="surface">#ffffff</color>      <!-- Web Card -->
+    <color name="error">#dc3545</color>        <!-- Web Delete/Error -->
+
+    <!-- Role Colors -->
+    <color name="admin_primary">#020e7c</color> <!-- Same as Brand Primary -->
+    <color name="admin_secondary">#010a5c</color>
+    
+    <!-- Mechanic Role (Trabajador Theme) -->
+    <color name="mechanic_primary">#FFC107</color> <!-- Worker Accent -->
+    <color name="mechanic_secondary">#FFB300</color>
+    <color name="mechanic_background">#fffbf0</color>
+
+    <!-- Client Role -->
+    <color name="client_primary">#D32F2F</color> <!-- Red -->
+
+    <!-- Status Colors -->
+    <color name="status_pendiente_bg">#ffeeba</color>
+    <color name="status_pendiente_text">#856404</color>
+    <color name="status_proceso_bg">#b8daff</color>
+    <color name="status_proceso_text">#004085</color>
+    <color name="status_completada_bg">#c3e6cb</color>
+    <color name="status_completada_text">#155724</color>
+
+    <!-- Text Colors -->
+    <color name="on_primary">#ffffff</color>
+    <color name="on_secondary">#ffffff</color>
+    <color name="on_background">#222222</color>
+    <color name="on_surface">#222222</color>
+    <color name="text_secondary">#666666</color> <!-- Muted -->
+
+    <!-- Legacy mappings for compatibility -->
+    <color name="purple_200">@color/primary</color>
+    <color name="purple_500">@color/primary</color>
+    <color name="purple_700">@color/primary_variant</color>
+    <color name="teal_200">@color/secondary</color>
+    <color name="teal_700">@color/secondary_variant</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+</resources>

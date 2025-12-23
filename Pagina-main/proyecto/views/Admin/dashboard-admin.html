@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Administrador - MIAUtomotriz</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../../css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Global Session Check
+        fetch('../../controllers/API/auth.php?action=check_session')
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success || !data.user) {
+                    window.location.href = '../../views/login.html';
+                } else {
+                    if (data.user.rol !== 'administrador') {
+                        window.location.href = '../../views/login.html';
+                    }
+                    sessionStorage.setItem('user_email', data.user.correo);
+                    sessionStorage.setItem('user_rol', data.user.rol);
+                    const display = document.getElementById('user-display');
+                    if (display) display.textContent = 'Bienvenido, ' + data.user.correo;
+                }
+            })
+            .catch(() => window.location.href = '../../views/login.html');
+    </script>
+    <style>
+        body {
+            background-color: #f4f6f9;
+        }
+
+        .stat-card {
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <nav class="navbar navbar-expand-lg navbar-dark mb-4 shadow bg-admin-blue">
+            <div class="container">
+                <a class="navbar-brand d-flex align-items-center" href="#">
+                    <img src="../../img/logo.png" alt="logo" height="40" class="me-2">
+                    <span>MIAUtomotriz</span>
+                </a>
+                <div class="collapse navbar-collapse justify-content-end">
+                    <ul class="navbar-nav">
+                        <li class="nav-item border-end pe-3 me-3 text-white d-flex align-items-center">
+                            <small id="user-display">Bienvenido</small>
+                        </li>
+                        <li class="nav-item"><a class="nav-link active" href="#">Inicio</a></li>
+                        <li class="nav-item"><a class="nav-link" href="reparaciones-admin.html">Órdenes</a></li>
+                        <li class="nav-item"><a class="nav-link" href="inventario.html">Inventario</a></li>
+                        <li class="nav-item"><a class="nav-link" href="reportes.html">Reportes</a></li>
+                        <li class="nav-item"><a class="nav-link" href="clientes.html">Clientes</a></li>
+                        <li class="nav-item"><a class="nav-link" href="personal.html">Personal</a></li>
+                        <li class="nav-item"><a class="nav-link text-danger"
+                                href="../../controllers/API/auth.php?action=logout"><i class="fas fa-sign-out-alt"></i>
+                                Cerrar Sesión</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-tachometer-alt text-primary"></i> Panel de Control</h2>
+                <div class="text-muted">{{ currentDate }}</div>
+            </div>
+
+            <div class="row mb-4 g-3">
+                <div class="col-12 col-md-6 col-xl-3">
+                    <div class="card stat-card bg-warning text-white h-100 shadow-sm border-0">
+                        <div class="card-body text-center d-flex flex-column justify-content-center">
+                            <h5 class="card-title">Pendientes</h5>
+                            <h2 class="display-4 fw-bold text-white">{{ dailyStats.pendientes || 0 }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 col-xl-3">
+                    <div class="card stat-card bg-info text-white h-100 shadow-sm border-0">
+                        <div class="card-body text-center d-flex flex-column justify-content-center">
+                            <h5 class="card-title">En Proceso</h5>
+                            <h2 class="display-4 fw-bold text-white">{{ dailyStats.en_proceso || 0 }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 col-xl-3">
+                    <div class="card stat-card bg-danger text-white h-100 shadow-sm border-0">
+                        <div class="card-body text-center d-flex flex-column justify-content-center">
+                            <h5 class="card-title">Cancelados</h5>
+                            <h2 class="display-4 fw-bold text-white">{{ dailyStats.canceladas || 0 }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 col-xl-3">
+                    <div class="card stat-card bg-success text-white h-100 shadow-sm border-0">
+                        <div class="card-body text-center d-flex flex-column justify-content-center">
+                            <h5 class="card-title">Completadas Hoy</h5>
+                            <h2 class="display-4 fw-bold text-white">{{ dailyStats.completadas || 0 }}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body d-flex gap-3 flex-wrap justify-content-center">
+
+                    <a href="reparaciones-admin.html" class="btn btn-outline-dark btn-lg">
+                        <i class="fas fa-list"></i> Ver Todas
+                    </a>
+                    <a href="clientes.html" class="btn btn-outline-dark btn-lg">
+                        <i class="fas fa-users"></i> Gestionar Clientes
+                    </a>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-white border-bottom-0">
+                            <h5 class="card-title text-primary"><i class="fas fa-chart-line"></i> Ingresos Mensuales
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="chartIngresos"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-white border-bottom-0">
+                            <h5 class="card-title text-primary"><i class="fas fa-chart-bar"></i> Rendimiento (Vehículos
+                                Atendidos)</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="chartRendimiento"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-white border-bottom-0">
+                            <h5 class="card-title text-primary"><i class="fas fa-cogs"></i> Repuestos Top 5</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="chartRepuestos"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-white border-bottom-0">
+                            <h5 class="card-title text-primary"><i class="fas fa-exclamation-triangle"></i> Averías
+                                Comunes</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="chartAverias"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    currentDate: new Date().toLocaleDateString(),
+                    dailyStats: { pendientes: 0, en_proceso: 0, completadas: 0, canceladas: 0 }
+                }
+            },
+            mounted() {
+                this.loadStats();
+                this.initCharts();
+            },
+            methods: {
+                async loadStats() {
+                    try {
+                        const res = await fetch('../../controllers/API/reparaciones.php?resumen=hoy');
+                        const data = await res.json();
+                        if (data.success) {
+                            this.dailyStats = data.data;
+                        }
+                    } catch (e) { console.error("Error loading stats", e); }
+                },
+                async initCharts() {
+                    try {
+                        // --- 1. INGRESOS MENSUALES ---
+                        const resIngresos = await fetch('../../controllers/API/helpers.php?data=ingresos');
+                        const dataIngresos = await resIngresos.json();
+                        
+                        if (dataIngresos.success && dataIngresos.data) {
+                            const ctxIngresos = document.getElementById('chartIngresos').getContext('2d');
+                            new Chart(ctxIngresos, {
+                                type: 'line',
+                                data: {
+                                    labels: dataIngresos.data.map(i => i.mes),
+                                    datasets: [{
+                                        label: 'Ingresos ($)',
+                                        data: dataIngresos.data.map(i => i.total),
+                                        borderColor: '#0d6efd',
+                                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                                        fill: true,
+                                        tension: 0.3
+                                    }]
+                                },
+                            });
+                        }
+
+                        // --- 2. RENDIMIENTO (Vehiculos Atendidos) ---
+                        const resStats = await fetch('../../controllers/API/helpers.php?data=stats');
+                        const dataStats = await resStats.json();
+
+                        if (dataStats.success && dataStats.data && dataStats.data.por_mes) {
+                            const ctxRendimiento = document.getElementById('chartRendimiento').getContext('2d');
+                            new Chart(ctxRendimiento, {
+                                type: 'bar',
+                                data: {
+                                    labels: dataStats.data.por_mes.map(i => i.mes),
+                                    datasets: [{
+                                        label: 'Vehículos Atendidos',
+                                        data: dataStats.data.por_mes.map(i => i.total),
+                                        backgroundColor: '#198754'
+                                    }]
+                                }
+                            });
+                        }
+
+                        // --- 3. REPUESTOS TOP 8 (Doughnut) ---
+                        // El endpoint devuelve top 8, no 5. Ajustar titulo si es necesario.
+                        const resRepuestos = await fetch('../../controllers/API/helpers.php?data=repuestos');
+                        const dataRepuestos = await resRepuestos.json();
+
+                        if (dataRepuestos.success && dataRepuestos.data) {
+                             const ctxRepuestos = document.getElementById('chartRepuestos').getContext('2d');
+                             new Chart(ctxRepuestos, {
+                                type: 'doughnut',
+                                data: {
+                                    labels: dataRepuestos.data.map(i => i.nombre),
+                                    datasets: [{
+                                        data: dataRepuestos.data.map(i => i.cantidad),
+                                        backgroundColor: ['#ffc107', '#0dcaf0', '#dc3545', '#6610f2', '#fd7e14', '#20c997', '#0d6efd', '#6c757d']
+                                    }]
+                                }
+                            });
+                        }
+
+                        // --- 4. AVERÍAS COMUNES ---
+                        const resAverias = await fetch('../../controllers/API/helpers.php?data=averias');
+                        const dataAverias = await resAverias.json();
+
+                        if (dataAverias.success && dataAverias.data) {
+                            const ctxAverias = document.getElementById('chartAverias').getContext('2d');
+                            new Chart(ctxAverias, {
+                                type: 'pie',
+                                data: {
+                                    labels: dataAverias.data.map(i => i.tipo),
+                                    datasets: [{
+                                        data: dataAverias.data.map(i => i.cantidad),
+                                        backgroundColor: ['#20c997', '#6c757d', '#0d6efd', '#ffc107', '#dc3545']
+                                    }]
+                                }
+                            });
+                        }
+
+                    } catch (error) {
+                        console.error("Error cargando gráficos:", error);
+                    }
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+
+</html>

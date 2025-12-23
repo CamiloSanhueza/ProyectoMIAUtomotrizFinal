@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/nav_home">
+
+    <fragment
+        android:id="@+id/nav_home"
+        android:name="com.example.appmiautomotriz.ui.HomeFragment"
+        android:label="@string/menu_home"
+        tools:layout="@layout/fragment_home" />
+
+    <fragment
+        android:id="@+id/nav_finished_tasks"
+        android:name="com.example.appmiautomotriz.ui.finished.FinishedTasksFragment"
+        android:label="@string/menu_finished_tasks"
+        tools:layout="@layout/fragment_home" />
+
+    <fragment
+        android:id="@+id/nav_mis_facturas"
+        android:name="com.example.appmiautomotriz.ui.facturas.MisFacturasFragment"
+        android:label="Mis Facturas"
+        tools:layout="@layout/fragment_mis_facturas" />
+
+    <fragment
+        android:id="@+id/nav_mis_cotizaciones"
+        android:name="com.example.appmiautomotriz.ui.cotizaciones.MisCotizacionesFragment"
+        android:label="Mis Cotizaciones"
+        tools:layout="@layout/fragment_mis_cotizaciones" />
+
+    <fragment
+        android:id="@+id/nav_clientes"
+        android:name="com.example.appmiautomotriz.ui.clientes.ClientesFragment"
+        android:label="Clientes"
+        tools:layout="@layout/fragment_clientes" />
+
+    <fragment
+        android:id="@+id/nav_agendamiento"
+        android:name="com.example.appmiautomotriz.ui.agendamiento.AgendamientoFragment"
+        android:label="Agendamiento"
+        tools:layout="@layout/fragment_agendamiento" />
+
+    <fragment
+        android:id="@+id/nav_trash"
+        android:name="com.example.appmiautomotriz.ui.TrashFragment"
+        android:label="@string/menu_trash"
+        tools:layout="@layout/fragment_trash" />
+
+    <fragment
+        android:id="@+id/nav_inventario"
+        android:name="com.example.appmiautomotriz.ui.inventario.InventarioFragment"
+        android:label="Inventario"
+        tools:layout="@layout/fragment_inventario" />
+
+    <fragment
+        android:id="@+id/nav_historial_vehiculo"
+        android:name="com.example.appmiautomotriz.ui.historial.HistorialVehiculoFragment"
+        android:label="Historial Vehículo"
+        tools:layout="@layout/fragment_historial_vehiculo" />
+
+    <fragment
+        android:id="@+id/nav_reportes"
+        android:name="com.example.appmiautomotriz.ui.reportes.ReportesFragment"
+        android:label="Reportes y Estadísticas"
+        tools:layout="@layout/fragment_reportes" />
+</navigation>

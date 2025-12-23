@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario Avanzado - MIAUtomotriz</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../../css/style.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        fetch('../../controllers/API/auth.php?action=check_session').then(res => res.json()).then(d => {
+            if (!d.success || d.user.rol !== 'administrador') window.location.href = '../login.html';
+            else {
+                const display = document.getElementById('user-display');
+                if (display) display.textContent = 'Bienvenido, ' + d.user.correo;
+            }
+        }).catch(() => window.location.href = '../login.html');
+    </script>
+</head>
+
+<body>
+    <div id="app">
+        <nav class="navbar navbar-expand-lg navbar-dark mb-4 shadow bg-admin-blue">
+            <div class="container">
+                <a class="navbar-brand d-flex align-items-center" href="#">
+                    <img src="../../img/logo.png" alt="logo" height="40" class="me-2">
+                    <span>MIAUtomotriz</span>
+                </a>
+                <div class="collapse navbar-collapse justify-content-end">
+                    <ul class="navbar-nav">
+                        <li class="nav-item border-end pe-3 me-3 text-white d-flex align-items-center">
+                            <small id="user-display">Bienvenido</small>
+                        </li>
+                        <li class="nav-item"><a class="nav-link" href="dashboard-admin.html">Inicio</a></li>
+                        <li class="nav-item"><a class="nav-link" href="reparaciones-admin.html">Órdenes</a></li>
+                        <li class="nav-item"><a class="nav-link active" href="#">Inventario</a></li>
+                        <li class="nav-item"><a class="nav-link" href="reportes.html">Reportes</a></li>
+                        <li class="nav-item"><a class="nav-link" href="clientes.html">Clientes</a></li>
+                        <li class="nav-item"><a class="nav-link" href="personal.html">Personal</a></li>
+                        <li class="nav-item"><a class="nav-link text-danger"
+                                href="../../controllers/API/auth.php?action=logout"><i
+                                    class="fas fa-sign-out-alt"></i></a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container">
+            <!-- Tabs de Navegación -->
+            <ul class="nav nav-tabs mb-4">
+                <li class="nav-item">
+                    <a class="nav-link" :class="{active: tab==='stock'}" href="#" @click.prevent="tab='stock'">Stock y
+                        Alertas</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" :class="{active: tab==='compras'}" href="#"
+                        @click.prevent="tab='compras'">Órdenes de Compra</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" :class="{active: tab==='proveedores'}" href="#"
+                        @click.prevent="tab='proveedores'">Proveedores</a>
+                </li>
+            </ul>
+
+            <!-- Tab Stock -->
+            <div v-if="tab==='stock'">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h4>Stock Actual</h4>
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Repuesto</th>
+                                    <th>Stock</th>
+                                    <th>Mínimo</th>
+                                    <th>Estado</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="item in stockItems" :key="item.id">
+                                    <td>{{ item.nombre }}</td>
+                                    <td>{{ item.stock_actual }}</td>
+                                    <td>{{ item.stock_minimo }}</td>
+                                    <td>
+                                        <span v-if="item.alerta" class="badge bg-danger">BAJO STOCK</span>
+                                        <span v-else class="badge bg-success">OK</span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-secondary"
+                                            @click="ajustarStock(item)">Ajuste Manual</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB PROVEEDORES -->
+            <div v-if="tab==='proveedores'">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4>Proveedores</h4>
+                    <button class="btn btn-primary" @click="modalProv({})">Nuevo Proveedor</button>
+                </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Contacto</th>
+                            <th>Teléfono</th>
+                            <th>Email</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="p in proveedores" :key="p.id_proveedor">
+                            <td>{{ p.nombre }}</td>
+                            <td>{{ p.contacto_nombre }}</td>
+                            <td>{{ p.telefono }}</td>
+                            <td>{{ p.email }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-info me-1" @click="modalProv(p)">Editar</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Tab Compras -->
+            <div v-if="tab==='compras'">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4>Órdenes de Compra</h4>
+                    <button class="btn btn-primary" @click="nuevaOden">Nueva Orden</button>
+                </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Fecha</th>
+                            <th>Proveedor</th>
+                            <th>Items</th>
+                            <th>Total</th>
+                            <th>Estado</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="o in ordenes" :key="o.id_orden_compra">
+                            <td>#{{ o.id_orden_compra }}</td>
+                            <td>{{ o.fecha_emision }}</td>
+                            <td>{{ o.proveedor }}</td>
+                            <td>
+                                <div v-if="o.items_count <= 1">{{ o.items_desc }}</div>
+                                <button v-else class="btn btn-sm btn-outline-info" @click="showOrderDetails(o)">
+                                    Ver {{ o.items_count }} Items
+                                </button>
+                            </td>
+                            <td>${{ o.total }}</td>
+                            <td>
+                                <span :class="['badge', o.estado==='Pendiente'?'bg-warning':'bg-success']">{{ o.estado
+                                    }}</span>
+                            </td>
+                            <td>
+                                <button v-if="o.estado==='Pendiente'" class="btn btn-sm btn-primary"
+                                    @click="recibirOrden(o)">Recibir Mercadería</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Modal Proveedor -->
+        <div class="modal fade" id="modalProv" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-body">
+                        <h5>Proveedor</h5>
+                        <input type="text" class="form-control mb-2" placeholder="Nombre Empresa"
+                            v-model="formProv.nombre">
+                        <input type="text" class="form-control mb-2" placeholder="Contacto"
+                            v-model="formProv.contacto_nombre">
+                        <input type="text" class="form-control mb-2" placeholder="Email" v-model="formProv.email">
+                        <input type="text" class="form-control mb-2" placeholder="Teléfono" v-model="formProv.telefono">
+                        <button class="btn btn-primary w-100" @click="saveProv" :disabled="saving">
+                            {{ saving ? 'Guardando...' : 'Guardar' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Nueva Orden -->
+        <div class="modal fade" id="modalOrden" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-body">
+                        <h5>Nueva Orden de Compra</h5>
+                        <div class="mb-3">
+                            <label>Proveedor</label>
+                            <select class="form-select" v-model="newOrden.id_proveedor">
+                                <option v-for="p in proveedores" :value="p.id_proveedor">{{ p.nombre }}</option>
+                            </select>
+                        </div>
+                        <hr>
+                        <h6>Items</h6>
+                        <div class="row g-2 mb-2" v-for="(item, i) in newOrden.items" :key="i">
+                            <div class="col-5">
+                                <select class="form-select form-select-sm" v-model="item.id_repuesto"
+                                    @change="onItemSelect(item)">
+                                    <option v-for="s in stockItems" :value="s.id">{{ s.nombre }}</option>
+                                </select>
+                            </div>
+                            <div class="col-6"><input type="number" class="form-control form-control-sm"
+                                    placeholder="Cant" v-model="item.cantidad" min="1"></div>
+                            <div class="col-1"><button class="btn btn-danger btn-sm"
+                                    @click="newOrden.items.splice(i,1)">X</button></div>
+                        </div>
+                        <button class="btn btn-secondary btn-sm mb-3" @click="addOrdenItem">+ Agregar Item</button>
+                        <button class="btn btn-success w-100" @click="saveOrden">Crear Orden</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Script
+        const { createApp } = Vue;
+        const apiStock = '../../controllers/API/inventario.php';
+        const apiProv = '../../controllers/API/proveedores.php';
+
+        // Vue App
+        createApp({
+            data() {
+                // Data
+                return {
+                    tab: 'stock',
+                    stockItems: [],
+                    proveedores: [],
+                    ordenes: [],
+                    formProv: {},
+                    newOrden: { id_proveedor: null, items: [] },
+                    modalP: null,
+                    modalO: null,
+                    saving: false
+                }
+            },
+            // Methods
+            mounted() {
+                this.loadStock();
+                this.loadPovs();
+                this.loadOrdenes();
+                this.modalP = new bootstrap.Modal(document.getElementById('modalProv'));
+                this.modalO = new bootstrap.Modal(document.getElementById('modalOrden'));
+            },
+            // Methods
+            methods: {
+                async loadStock() {
+                    const res = await fetch(apiStock + '?action=stock');
+                    const d = await res.json();
+                    if (d.success) this.stockItems = d.data;
+                },
+                async loadPovs() {
+                    const res = await fetch(apiProv);
+                    const d = await res.json();
+                    if (d.success) this.proveedores = d.data;
+                },
+                async loadOrdenes() {
+                    const res = await fetch(apiStock + '?action=ordenes');
+                    const d = await res.json();
+                    if (d.success) this.ordenes = d.data;
+                },
+                async ajustarStock(item) {
+                    const { value: n } = await Swal.fire({
+                        title: 'Ajuste de Stock',
+                        text: "Nuevo stock para " + item.nombre,
+                        input: 'number',
+                        inputValue: item.stock_actual,
+                        customClass: { popup: 'swal-wide' },
+                        showCancelButton: true,
+                        inputValidator: (value) => {
+                            if (!value || isNaN(value)) {
+                                return 'Debes ingresar un número válido';
+                            }
+                        }
+                    });
+
+                    if (n) {
+                        fetch(apiStock + '?action=stock', {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ id: item.id, cantidad: n })
+                        }).then(() => {
+                            this.loadStock();
+                            Swal.fire('Actualizado', 'Stock actualizado correctamente', 'success');
+                        });
+                    }
+                },
+                // Modal
+                modalProv(p) {
+                    this.formProv = { ...p };
+                    this.modalP.show();
+                },
+                async saveProv() {
+                    if (!this.formProv.nombre) {
+                        Swal.fire('Error', 'El nombre es obligatorio', 'error');
+                        return;
+                    }
+
+                    this.saving = true;
+                    try {
+                        const method = this.formProv.id_proveedor ? 'PUT' : 'POST';
+                        const body = this.formProv.id_proveedor ? { ...this.formProv, id: this.formProv.id_proveedor } : this.formProv;
+
+                        const res = await fetch(apiProv, {
+                            method,
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(body)
+                        });
+                        const data = await res.json();
+
+                        if (data.success) {
+                            this.modalP.hide();
+                            await this.loadPovs();
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Éxito',
+                                text: data.message || 'Proveedor guardado correctamente',
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+                        } else {
+                            throw new Error(data.message || 'Error al guardar');
+                        }
+                    } catch (e) {
+                        Swal.fire('Error', e.message || 'Ocurrió un error en el servidor', 'error');
+                    } finally {
+                        this.saving = false;
+                    }
+                },
+                // Ordenes
+                nuevaOden() {
+                    this.newOrden = { id_proveedor: '', items: [] };
+                    this.addOrdenItem();
+                    this.modalO.show();
+                },
+                addOrdenItem() {
+                    this.newOrden.items.push({ id_repuesto: '', cantidad: 1, precio: 0 });
+                },
+                async saveOrden() {
+                    const res = await fetch(apiStock + '?action=ordenes', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(this.newOrden)
+                    });
+                    if ((await res.json()).success) {
+                        this.modalO.hide();
+                        this.loadOrdenes();
+                        Swal.fire({
+                            position: 'top-end',
+                            icon: 'success',
+                            title: 'Orden creada',
+                            showConfirmButton: false,
+                            timer: 1500
+                        });
+                    } else Swal.fire('Error', 'Error al crear la orden', 'error');
+                },
+                async recibirOrden(o) {
+                    const result = await Swal.fire({
+                        title: 'Recepción de Mercadería',
+                        html: `¿Confirmar llegada de: <strong>${o.items_desc || 'Items'}</strong>?<br><small>Se actualizará el stock disponible.</small>`,
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'Sí, recibir',
+                        cancelButtonText: 'Cancelar',
+                        confirmButtonColor: '#198754',
+                        cancelButtonColor: '#6c757d'
+                    });
+
+                    if (!result.isConfirmed) return;
+
+                    const res = await fetch(apiStock + '?action=recibir', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id_orden: o.id_orden_compra })
+                    });
+
+                    const json = await res.json();
+                    if (json.success) {
+                        Swal.fire('¡Éxito!', 'Stock actualizado correctamente.', 'success');
+                        this.loadOrdenes();
+                        this.loadStock();
+                    } else {
+                        Swal.fire('Error', json.message || 'No se pudo recibir.', 'error');
+                    }
+                },
+                onItemSelect(item) {
+                    const stockItem = this.stockItems.find(s => s.id === item.id_repuesto);
+                    if (stockItem) {
+                        item.precio = stockItem.precio_compra || 0;
+                    }
+                },
+                showOrderDetails(o) {
+                    const items = o.items_desc ? o.items_desc.split(', ') : [];
+                    let listHtml = '<ul class="text-start">';
+                    items.forEach(i => listHtml += `<li>${i}</li>`);
+                    listHtml += '</ul>';
+
+                    Swal.fire({
+                        title: `Orden #${o.id_orden_compra}`,
+                        html: listHtml,
+                        confirmButtonText: 'Cerrar'
+                    });
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+
+</html>

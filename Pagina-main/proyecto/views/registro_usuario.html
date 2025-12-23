@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Registro de Usuario — MIAUtomotriz</title>
+    <link rel="stylesheet" href="../css/style.css">
+
+</head>
+
+<body class="theme-grey">
+    <main>
+        <section class="card registro-card">
+            <div style="text-align:center; margin-bottom: 20px;">
+                <img src="../img/logo.png" alt="MIAUtomotriz Logo" style="height: 60px;">
+            </div>
+            <h2 class="text-center">Registro de Usuario</h2>
+
+            <!-- Mensaje de Error (JS) -->
+            <div id="msg-error" class="error-message" style="display: none;"></div>
+
+            <form action="../controllers/API/auth.php" method="post" autocomplete="off" novalidate>
+                <input type="hidden" name="action" value="register" />
+
+                <fieldset>
+                    <legend>Datos Personales</legend>
+
+                    <div>
+                        <label for="nombre">Nombre</label>
+                        <input id="nombre" name="nombre" type="text" required placeholder="Tu nombre" />
+                    </div>
+
+                    <div>
+                        <label for="apellido">Apellido</label>
+                        <input id="apellido" name="apellido" type="text" required placeholder="Tu apellido" />
+                    </div>
+
+                    <div>
+                        <label for="rut">RUT (con guión y dígito)</label>
+                        <input id="rut" name="rut" type="text" required placeholder="12345678-K" />
+                        <small>Formato: 12345678-9</small>
+                    </div>
+
+                    <div>
+                        <label for="telefono">Teléfono</label>
+                        <input id="telefono" name="telefono" type="tel" placeholder="+569..." />
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Datos de Acceso</legend>
+
+                    <div>
+                        <label for="email">Correo electrónico</label>
+                        <input id="email" name="email" type="email" required placeholder="tuemail@ejemplo.com" />
+                    </div>
+
+                    <div>
+                        <label for="contraseña">Contraseña (Mínimo 8 caracteres)</label>
+                        <input id="contraseña" name="contraseña" type="password" required minlength="8" />
+                    </div>
+
+                    <div>
+                        <label for="confirm_contraseña">Confirmar Contraseña</label>
+                        <input id="confirm_contraseña" name="confirm_contraseña" type="password" required
+                            minlength="8" />
+                    </div>
+                </fieldset>
+
+                <button type="submit">Crear cuenta</button>
+            </form>
+            <p class="mt-15">¿Ya tienes una cuenta? <a href="login.html">Iniciar sesión</a>.</p>
+        </section>
+    </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+
+            // Error handling
+            const error = urlParams.get('error');
+            if (error) {
+                const errDiv = document.getElementById('msg-error');
+                errDiv.textContent = decodeURIComponent(error.replace(/\+/g, ' '));
+                errDiv.style.display = 'block';
+            }
+
+            // Repopulate email
+            const emailInput = urlParams.get('email_input');
+            if (emailInput) {
+                document.getElementById('email').value = decodeURIComponent(emailInput);
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clientes — MIAUtomotriz</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../../css/style.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        body {
+            background-color: #f4f6f9;
+        }
+
+        .main-container {
+            margin-top: 30px;
+            margin-bottom: 50px;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="app">
+        <!-- Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-dark mb-4 shadow bg-admin-blue">
+            <div class="container">
+                <a class="navbar-brand d-flex align-items-center" href="#">
+                    <img src="../../img/logo.png" alt="logo" height="40" class="me-2">
+                    <span>MIAUtomotriz</span>
+                </a>
+                <div class="collapse navbar-collapse justify-content-end">
+                    <ul class="navbar-nav">
+                        <li class="nav-item border-end pe-3 me-3 text-white d-flex align-items-center">
+                            <small id="user-display">Bienvenido</small>
+                        </li>
+                        <li class="nav-item"><a class="nav-link" href="dashboard-admin.html">Inicio</a></li>
+                        <li class="nav-item"><a class="nav-link" href="reparaciones-admin.html">Órdenes</a></li>
+                        <li class="nav-item"><a class="nav-link" href="inventario.html">Inventario</a></li>
+                        <li class="nav-item"><a class="nav-link" href="reportes.html">Reportes</a></li>
+                        <li class="nav-item"><a class="nav-link active" href="#">Clientes</a></li>
+                        <li class="nav-item"><a class="nav-link" href="personal.html">Personal</a></li>
+                        <li class="nav-item"><a class="nav-link text-danger"
+                                href="../../controllers/API/auth.php?action=logout"><i
+                                    class="fas fa-sign-out-alt"></i></a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container main-container">
+            <div class="card shadow-sm">
+                <div class="card-header text-white d-flex justify-content-between align-items-center bg-admin-dark">
+                    <h4 class="mb-0">Gestión de Clientes</h4>
+                    <div>
+                        <a href="formulario.html" class="btn btn-success btn-sm"><i class="fas fa-plus"></i> Nuevo
+                            Cliente</a>
+                    </div>
+                </div>
+                <div class="card-body">
+
+                    <div class="mb-4">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" class="form-control" placeholder="Buscar por nombre, RUT o correo..."
+                                v-model="searchQuery">
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>RUT/RUN</th>
+                                    <th>Nombre</th>
+                                    <th>Teléfono</th>
+                                    <th>Correo</th>
+                                    <th>Región/Ciudad</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="c in filteredClients" :key="c.id">
+                                    <td>{{ c.id }}</td>
+                                    <td>{{ c.nombre }} {{ c.apellido }}</td>
+                                    <td>{{ c.telefono || '-' }}</td>
+                                    <td>{{ c.correo }}</td>
+                                    <td>
+                                        <small class="d-block">{{ c.region || '' }}</small>
+                                        <small class="text-muted">{{ c.ciudad || '' }}</small>
+                                    </td>
+                                    <td>
+                                        <a :href="'formulario_edicion.html?id=' + encodeURIComponent(c.id)"
+                                            class="btn btn-sm btn-outline-primary me-2" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button @click="deleteClient(c)" class="btn btn-sm btn-outline-danger"
+                                            title="Eliminar">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr v-if="filteredClients.length === 0 && !loading">
+                                    <td colspan="6" class="text-center text-muted py-4">
+                                        No se encontraron clientes coincidentes.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+                <div class="card-footer text-muted text-center small">
+                    © 2025 MIAUtomotriz — Todos los derechos reservados.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    allClients: [],
+                    searchQuery: '',
+                    loading: false,
+                    userRole: '',
+                    userId: null,
+                    userEmail: ''
+                };
+            },
+            computed: {
+                filteredClients() {
+                    if (!this.searchQuery) return this.allClients;
+                    const lower = this.searchQuery.toLowerCase().trim();
+                    return this.allClients.filter(c => {
+                        const full = (c.nombre + ' ' + c.apellido).toLowerCase();
+                        return (c.id && c.id.toLowerCase().includes(lower)) ||
+                            (full.includes(lower)) ||
+                            (c.correo && c.correo.toLowerCase().includes(lower));
+                    });
+                }
+            },
+            mounted() {
+                this.checkSession().then(() => {
+                    this.fetchClients();
+                });
+            },
+            methods: {
+                async checkSession() {
+                    try {
+                        const res = await fetch('../../controllers/API/auth.php?action=check_session');
+                        const json = await res.json();
+                        // STRICT ADMIN CHECK
+                        if (json.success && json.user && json.user.rol === 'administrador') {
+                            this.userRole = json.user.rol;
+                            this.userId = json.user.id;
+                            const display = document.getElementById('user-display');
+                            if (display) display.textContent = 'Bienvenido, ' + json.user.correo;
+                        } else {
+                            // Redirect if not admin
+                            window.location.href = '../../views/login.html';
+                        }
+                    } catch (e) { window.location.href = '../../views/login.html'; }
+                },
+                async fetchClients() {
+                    this.loading = true;
+                    try {
+                        const url = '../../controllers/API/clientes.php?limit=1000&t=' + Date.now();
+                        const res = await fetch(url);
+                        const json = await res.json();
+                        if (json.success) this.allClients = json.data || [];
+                    } catch (e) { console.error('Network error:', e); }
+                    finally { this.loading = false; }
+                },
+                async deleteClient(client) {
+                    const result = await Swal.fire({
+                        title: '¿Estás seguro?',
+                        text: `¿Eliminar al cliente ${client.nombre} ${client.apellido}?`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Sí, eliminar',
+                        cancelButtonText: 'Cancelar'
+                    });
+
+                    if (!result.isConfirmed) return;
+
+                    try {
+                        const res = await fetch(`../../controllers/API/clientes.php?id=${client.id}`, { method: 'DELETE' });
+                        const json = await res.json();
+                        if (json.success) {
+                            Swal.fire('Eliminado', 'Cliente eliminado correctamente.', 'success');
+                            this.fetchClients();
+                        } else {
+                            Swal.fire('Error', 'Error: ' + json.message, 'error');
+                        }
+                    } catch (e) {
+                        Swal.fire('Error', 'Error de conexión.', 'error');
+                    }
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+
+</html>

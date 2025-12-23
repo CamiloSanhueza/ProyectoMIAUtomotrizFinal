@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_home"
+            android:icon="@drawable/ic_menu_home"
+            android:title="@string/menu_home" />
+
+        <item
+            android:id="@+id/nav_finished_tasks"
+            android:icon="@drawable/ic_menu_finished"
+            android:title="@string/menu_finished_tasks" />
+
+        <item
+            android:id="@+id/nav_mis_facturas"
+            android:icon="@android:drawable/ic_menu_agenda"
+            android:title="Mis Facturas" />
+
+        <item
+            android:id="@+id/nav_mis_cotizaciones"
+            android:icon="@android:drawable/ic_menu_edit"
+            android:title="Mis Cotizaciones" />
+
+        <item
+            android:id="@+id/nav_clientes"
+            android:icon="@android:drawable/ic_menu_my_calendar"
+            android:title="Clientes" />
+
+        <item
+            android:id="@+id/nav_agendamiento"
+            android:icon="@android:drawable/ic_menu_today"
+            android:title="Agendamiento" />
+
+        <item
+            android:id="@+id/nav_trash"
+            android:icon="@drawable/ic_menu_trash"
+            android:title="@string/menu_trash" />
+
+        <item
+            android:id="@+id/nav_inventario"
+            android:icon="@android:drawable/ic_menu_manage"
+            android:title="Inventario" />
+
+        <item
+            android:id="@+id/nav_historial_vehiculo"
+            android:icon="@android:drawable/ic_menu_recent_history"
+            android:title="Historial Vehículo" />
+
+        <item
+            android:id="@+id/nav_reportes"
+            android:icon="@android:drawable/ic_menu_sort_by_size"
+            android:title="Reportes y Estadísticas" />
+
+        <item
+            android:id="@+id/nav_profile"
+            android:icon="@android:drawable/ic_menu_my_calendar"
+            android:title="Mi Perfil" />
+
+        <item
+            android:id="@+id/nav_logout"
+            android:icon="@drawable/ic_menu_logout"
+            android:title="Cerrar Sesion" />
+    </group>
+</menu>

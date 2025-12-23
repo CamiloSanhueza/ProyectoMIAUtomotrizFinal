@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Login — MIAUtomotriz</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .role-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .role-btn {
+            padding: 10px 20px;
+            border: 2px solid transparent;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            background: #e0e0e0;
+            color: #555;
+            transition: all 0.3s;
+        }
+
+        /* Admin State */
+        .role-btn.active {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+
+<body>
+
+    <main>
+        <section class="card login-card">
+
+            <div class="role-selector">
+                <button id="btn-admin" class="role-btn active" onclick="setRole('admin')">Administrador</button>
+                <button id="btn-mech" class="role-btn" onclick="setRole('trabajador')">Mecánico</button>
+            </div>
+
+
+
+            <div style="text-align:center; margin-bottom: 20px;">
+                <img src="../img/logo.png" alt="MIAUtomotriz Logo" style="height: 60px;">
+            </div>
+
+            <!-- Mensajes de JS -->
+            <div id="msg-success" class="success-message" style="display: none;"></div>
+            <div id="msg-error" class="error-message" style="display: none;"></div>
+
+            <form action="../controllers/API/auth.php" method="post" autocomplete="on" novalidate>
+                <input type="hidden" name="action" value="login" />
+                <input type="hidden" name="user_role" id="user_role" value="administrador" />
+
+                <fieldset>
+                    <legend>Ingrese sus datos</legend>
+
+                    <label for="email">Correo electrónico</label>
+                    <input id="email" name="email" type="email" required placeholder="tucorreo@ejemplo.com" />
+
+                    <label for="password">Contraseña</label>
+                    <input id="password" name="password" type="password" required minlength="8" />
+
+                    <div>
+                        <input id="remember" name="remember" type="checkbox" />
+                        <label for="remember">Recuérdame</label>
+                    </div>
+                </fieldset>
+
+                <button type="submit">Entrar</button>
+            </form>
+
+            <p class="mt-15 text-center">¿No tienes una cuenta? <a href="registro_usuario.html">Regístrate aquí</a>.</p>
+        </section>
+    </main>
+
+    <script>
+        // Manejo de errores y exito de la URL
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+
+            // Errores
+            const error = urlParams.get('error');
+            if (error) {
+                const errDiv = document.getElementById('msg-error');
+                errDiv.textContent = decodeURIComponent(error.replace(/\+/g, ' '));
+                errDiv.style.display = 'block';
+            }
+
+            // Exito
+            const registered = urlParams.get('registered');
+            if (registered === 'true') {
+                const succDiv = document.getElementById('msg-success');
+                succDiv.textContent = '¡Registro exitoso! Ya puedes iniciar sesión.';
+                succDiv.style.display = 'block';
+            }
+
+            // Ver si ya hay sesion
+            fetch('../controllers/API/auth.php?action=check_session')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.user) {
+                        if (data.user.rol === 'administrador') window.location.href = 'Admin/dashboard-admin.html';
+                        else if (data.user.rol === 'mecanico') window.location.href = 'Trabajador/dashboard-trabajador.html';
+                    }
+                }).catch(() => { });
+
+            // Vista por defecto (Admin)
+            setRole('admin');
+        });
+
+        function setRole(role) {
+            const body = document.body;
+            const adminBtn = document.getElementById('btn-admin');
+            const mechBtn = document.getElementById('btn-mech');
+            const roleInput = document.getElementById('user_role');
+
+            // Limpiar clases
+            body.classList.remove('trabajador'); // Removes yellow theme
+
+            // Remove active state
+            if (adminBtn) adminBtn.classList.remove('active');
+            if (mechBtn) mechBtn.classList.remove('active');
+
+            if (role === 'trabajador') {
+                // Tema Mecanico
+                body.classList.add('trabajador');
+                if (mechBtn) mechBtn.classList.add('active');
+                if (roleInput) roleInput.value = 'mecanico';
+            } else {
+                // Tema Admin
+                if (adminBtn) adminBtn.classList.add('active');
+                if (roleInput) roleInput.value = 'administrador';
+            }
+        }
+    </script>
+</body>
+
+</html>

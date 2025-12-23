@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "774580892158",
+    "project_id": "appmiautomotriz",
+    "storage_bucket": "appmiautomotriz.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:774580892158:android:54a88870650fe6597e10af",
+        "android_client_info": {
+          "package_name": "com.example.appmiautomotriz"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDS1uI6O_eVwVyDjxVZc-0adJ6fyUDSCfs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
